@@ -38,6 +38,16 @@ function getFromImage(filename) {
                 let faces = [];
                 if (Object.prototype.hasOwnProperty.call(tags, "PersonInImage"))
                     faces = tags.PersonInImage;
+                // support for Picasa face regions
+                else if (Object.prototype.hasOwnProperty.call(tags, "RegionInfo")) {
+                    out = [];
+                    for (i=0; i < tags.RegionInfo.RegionList.length; i++) {
+                        if (tags.RegionInfo.RegionList[i].Name)
+                            out[i] = tags.RegionInfo.RegionList[i].Name;
+                    }
+                    //console.log("Found Region Names: ", out);
+                    faces = out;
+                }
 
                 resolve({
                     modif: modif,
