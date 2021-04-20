@@ -28,16 +28,48 @@ function init() {
         //       verbose: console.log,
         fileMustExist: true
     });
+
+    // clean triggers
+    deleteTriggers();
 }
 
 /**
  * close connection to db
  */
 function end() {
+    createTriggers();
     db.close();
     //console.log("plex.end");
 }
 
+function deleteTriggers() {
+    /*
+    drop trigger fts4_tag_titles_before_delete_icu;
+    drop trigger fts4_tag_titles_after_insert_icu;
+    */
+    let sql = "DROP TRIGGER fts4_tag_titles_before_delete_icu";
+    let stmt = db.prepare(sql);
+    stmt.run();
+
+    sql = "DROP TRIGGER fts4_tag_titles_after_insert_icu";
+    stmt = db.prepare(sql);
+    stmt.run();
+}
+
+
+function createTriggers() {
+    /*
+    CREATE TRIGGER fts4_tag_titles_before_delete_icu BEFORE DELETE ON tags BEGIN DELETE FROM fts4_tag_titles_icu WHERE docid=old.rowid; END
+    CREATE TRIGGER fts4_tag_titles_after_insert_icu AFTER INSERT ON tags BEGIN INSERT INTO fts4_tag_titles_icu(docid, tag) VALUES(new.rowid, new.tag); END
+    */
+    let sql = "CREATE TRIGGER fts4_tag_titles_before_delete_icu BEFORE DELETE ON tags BEGIN DELETE FROM fts4_tag_titles_icu WHERE docid=old.rowid; END";
+    let stmt = db.prepare(sql);
+    stmt.run();
+
+    sql = "CREATE TRIGGER fts4_tag_titles_after_insert_icu AFTER INSERT ON tags BEGIN INSERT INTO fts4_tag_titles_icu(docid, tag) VALUES(new.rowid, new.tag); END";
+    stmt = db.prepare(sql);
+    stmt.run();
+}
 
 // add a column to table media_items, to store datetime of TTP update
 // catch error if column alreadu exists
@@ -444,6 +476,9 @@ module.exports = {
     end: end,
     listTag: listTag,
     scanPhotos: scanPhotos,
+
+    deleteTriggers: deleteTriggers,
+    createTriggers: createTriggers,
 
     addColumnTTPUpdate: addColumnTTPUpdate,
     cleanLoneTTPTags: cleanLoneTTPTags,

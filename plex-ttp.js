@@ -12,6 +12,8 @@ const usage = `
     -c : clean Lone Tags
     -l [tag] : list matching tags 
     -d tag: delete the tag
+    -t : create triggers
+    -r : remove triggers
     `;
 
 let exifProcessing = 0, // processing EXIF ongoing
@@ -107,6 +109,22 @@ if (argv.c) {
     // eslint-disable-next-line no-console
     console.log("cleaning Lone tags");
     plex.cleanLoneTTPTags();
+    plex.end();
+}
+
+if (argv.t) {
+    plex.init();
+    // eslint-disable-next-line no-console
+    console.log("Creating Triggers");
+    plex.createTriggers();
+    plex.end();
+}
+
+if (argv.r) {
+    plex.init();
+    // eslint-disable-next-line no-console
+    console.log("Removing Triggers");
+    plex.deleteTriggers();
     plex.end();
 }
 
