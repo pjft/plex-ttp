@@ -23,7 +23,7 @@ let exifProcessing = 0, // processing EXIF ongoing
 const evHandler = function () {
     if (argv.debug)
         console.log(`exifProcessing ${exifProcessing}   statProcessing ${statProcessing}`); // eslint-disable-line no-console
-
+    
     if (exifProcessing <= 0 && statProcessing <= 0) {
         plex.cleanLoneTTPTags();
         exif.end();
@@ -52,7 +52,7 @@ function DoMainScan() {
         return;
 
     function doTheUpdate(rec) {
-        //console.log("doTheUpdate", rec.file);
+//        console.log("doTheUpdate: ", rec.file);
         exifProcessing++;
 
         exif.getFromImage(rec.file)
@@ -61,12 +61,13 @@ function DoMainScan() {
                 plex.deleteTTPTags(rec.mid); // delete any existing tags of the photo
                 plex.addTTPTags(rec.mid, data.faces); // add new tags
                 // eslint-disable-next-line no-console
-                console.log(`${rec.file}:`, data.faces);
+                console.log(`Adding ${rec.file}:`, data.faces);
                 // console.log("full ", data.tags);
                 exifProcessing--;
                 ev.emit("exif");
             })
-            .catch(() => {
+            .catch((err) => {
+                console.log(`Exception!`, err);
                 exifProcessing--;
                 ev.emit("exif");
             });

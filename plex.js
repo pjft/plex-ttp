@@ -14,12 +14,14 @@ function init() {
     //console.log("plex.init");
     // if not specified above, database should be there...
     if (!PLEXLIB)
-        PLEXLIB = path.join(process.env.LOCALAPPDATA, "Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db");
+        PLEXLIB = path.join("/srv/dev-disk-by-label-HDD/plex/", "Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db");
 
     if (!fs.existsSync(PLEXLIB)) {
-        console.error(`${PLEXLIB} does not EXIST`);
+        console.log(`${PLEXLIB} does not EXIST`);
         process.exit(1);
     }
+
+    console.log(`${PLEXLIB} is the folder`);
 
     // open the database
     db = new Database(PLEXLIB, {
@@ -183,6 +185,7 @@ function cleanLoneTTPTags() {
      WHERE tag_type = 0 
      AND extra_data = 'TTP' 
      AND id NOT IN (select tag_id from taggings WHERE "index" = 0)`;
+    console.log(sql);
 
     let stmt = db.prepare(sql);
     stmt.run();
@@ -249,35 +252,40 @@ function scanPlacesTags() {
  * @param {*} tags 
  */
 function addTTPTags(mid, tags) {
-    //   console.log("add tags for meta_item_id ", mid, tags);
+    console.log("add tags for meta_item_id ", mid, tags);
 
     for (let i = 0; i < tags.length; i++) {
         let tag = tags[i];
 
         let tid = null;
+        console.log (`Finding`);
         let found = TheTTPTags.find(elt => elt.tag == tag);
         if (found) {
-            //console.log (`${tag} already exists`,found);
+            console.log (`${tag} already exists`,found);
             tid = found.id;
         } else {
+            console.log (`Not exists`);
             // if not exists
             const sql = "INSERT INTO tags (tag, tag_type,extra_data) VALUES (?, 0,'TTP')";
+            console.log (`Preparing`);
             const stmt = db.prepare(sql);
+            console.log (`Running`);
             const info = stmt.run(tag);
+            console.log (`info`);
             tid = info.lastInsertRowid;
             TheTTPTags.push({
                 id: tid,
                 tag: tag
             }); // add a new entry in TheTTPTags
-            //console.log("created ",tag, " as ",rid)
+            console.log("created ",tag, " as ",tid)
         }
-        //console.log("tag created ", rid);
+        console.log("tag created ", tid);
 
         let sql = "INSERT INTO taggings (metadata_item_id, tag_id, \"index\") VALUES (?, ?, '0')";
         let stmt = db.prepare(sql);
         stmt.run(mid, tid);
         //const rid = info.lastInsertRowid;
-        //console.log("tagging created ", rid);
+        console.log("tagging created ", tid);
 
     }
 

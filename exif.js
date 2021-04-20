@@ -36,8 +36,10 @@ function getFromImage(filename) {
                     };
 
                 let faces = [];
-                if (Object.prototype.hasOwnProperty.call(tags, "PersonInImage"))
+                if (Object.prototype.hasOwnProperty.call(tags, "PersonInImage")){
                     faces = tags.PersonInImage;
+                    console.log("Found Person in Image Names: ", faces);
+                }
                 // support for Picasa face regions
                 else if (Object.prototype.hasOwnProperty.call(tags, "RegionInfo")) {
                     out = [];
@@ -45,7 +47,7 @@ function getFromImage(filename) {
                         if (tags.RegionInfo.RegionList[i].Name)
                             out[i] = tags.RegionInfo.RegionList[i].Name;
                     }
-                    //console.log("Found Region Names: ", out);
+                    console.log("Found Region Names: ", out);
                     faces = out;
                 }
 
