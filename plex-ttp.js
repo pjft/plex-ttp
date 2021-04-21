@@ -115,16 +115,16 @@ if (argv.c) {
 if (argv.t) {
     plex.init();
     // eslint-disable-next-line no-console
-    console.log("Creating Triggers");
-    plex.createTriggers();
+    //console.log("Creating Triggers");
+    //plex.createTriggers();
     plex.end();
 }
 
 if (argv.r) {
     plex.init();
     // eslint-disable-next-line no-console
-    console.log("Removing Triggers");
-    plex.deleteTriggers();
+    //console.log("Removing Triggers");
+    //plex.deleteTriggers();
     plex.end();
 }
 

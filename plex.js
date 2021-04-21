@@ -9,6 +9,8 @@ let TheTTPTags = null; // list des tags TTP existants
 let ThePlaceTags = null; // list des tags Places existants
 
 let db = null;
+let triggerBeforeDelete = null;
+let triggerAfterInsert = null;
 
 function init() {
     //console.log("plex.init");
@@ -29,7 +31,8 @@ function init() {
         fileMustExist: true
     });
 
-    // clean triggers
+    // backup and clean triggers
+    storeTriggers()
     deleteTriggers();
 }
 
@@ -40,6 +43,24 @@ function end() {
     createTriggers();
     db.close();
     //console.log("plex.end");
+}
+
+function storeTriggers() {
+    /*
+    SELECT sql FROM sqlite_master WHERE type='trigger' and name='fts4_tag_titles_before_delete_icu';
+    SELECT sql FROM sqlite_master WHERE type='trigger' and name='fts4_tag_titles_after_insert_icu';
+    */
+
+
+    let sql = "SELECT sql FROM sqlite_master WHERE type='trigger' and name='fts4_tag_titles_before_delete_icu'";
+    let stmt = db.prepare(sql);
+    triggerBeforeDelete = stmt.get();
+
+    sql = "SELECT sql FROM sqlite_master WHERE type='trigger' and name='fts4_tag_titles_after_insert_icu'";
+    stmt = db.prepare(sql);
+    triggerAfterInsert = stmt.get();
+    console.log("Before Delete: ", triggerBeforeDelete.sql);
+    console.log("After Insert: ", triggerAfterInsert.sql);
 }
 
 function deleteTriggers() {
@@ -54,6 +75,7 @@ function deleteTriggers() {
     sql = "DROP TRIGGER fts4_tag_titles_after_insert_icu";
     stmt = db.prepare(sql);
     stmt.run();
+    console.log("deleted triggers");
 }
 
 
@@ -62,13 +84,18 @@ function createTriggers() {
     CREATE TRIGGER fts4_tag_titles_before_delete_icu BEFORE DELETE ON tags BEGIN DELETE FROM fts4_tag_titles_icu WHERE docid=old.rowid; END
     CREATE TRIGGER fts4_tag_titles_after_insert_icu AFTER INSERT ON tags BEGIN INSERT INTO fts4_tag_titles_icu(docid, tag) VALUES(new.rowid, new.tag); END
     */
-    let sql = "CREATE TRIGGER fts4_tag_titles_before_delete_icu BEFORE DELETE ON tags BEGIN DELETE FROM fts4_tag_titles_icu WHERE docid=old.rowid; END";
+
+    //console.log("Create: Before Delete: ", triggerBeforeDelete.sql);
+    //console.log("Create: After Insert: ", triggerAfterInsert.sql);
+
+    let sql = triggerBeforeDelete.sql; //"CREATE TRIGGER fts4_tag_titles_before_delete_icu BEFORE DELETE ON tags BEGIN DELETE FROM fts4_tag_titles_icu WHERE docid=old.rowid; END";
     let stmt = db.prepare(sql);
     stmt.run();
 
-    sql = "CREATE TRIGGER fts4_tag_titles_after_insert_icu AFTER INSERT ON tags BEGIN INSERT INTO fts4_tag_titles_icu(docid, tag) VALUES(new.rowid, new.tag); END";
+    sql = triggerAfterInsert.sql; //"CREATE TRIGGER fts4_tag_titles_after_insert_icu AFTER INSERT ON tags BEGIN INSERT INTO fts4_tag_titles_icu(docid, tag) VALUES(new.rowid, new.tag); END";
     stmt = db.prepare(sql);
     stmt.run();
+    console.log("created triggers");
 }
 
 // add a column to table media_items, to store datetime of TTP update
