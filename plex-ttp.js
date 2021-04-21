@@ -20,6 +20,7 @@ let exifProcessing = 0, // processing EXIF ongoing
     statProcessing = 0, // stat file ongoing
     nbUpdate = 0; // number of updates
 
+
 // Need to track when to end EXIF process and close DB connection
 // emitted when change in exifProcessing or statProcessing 
 const evHandler = function () {
@@ -98,6 +99,13 @@ function DoMainScan() {
 
 
 /******************** So what do we do with all that ?********* */
+
+const reader = require("readline-sync"); //npm install readline-sync
+let username = reader.question("Please confirm that Plex is not running, and that the database is backed up. Type 'yes' to continue. ");
+if (username != "yes") {
+    console.log("Exiting.");
+    return;
+}
 
 if (argv.h)
     console.log(usage); // eslint-disable-line no-console

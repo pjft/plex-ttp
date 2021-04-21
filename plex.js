@@ -15,6 +15,7 @@ let triggerAfterInsert = null;
 function init() {
     //console.log("plex.init");
     // if not specified above, database should be there...
+
     if (!PLEXLIB)
         PLEXLIB = path.join("/srv/dev-disk-by-label-HDD/plex/", "Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db");
 
