@@ -32,16 +32,14 @@ function init() {
         fileMustExist: true
     });
 
-    // backup and clean triggers
-    storeTriggers()
-    deleteTriggers();
+    
 }
 
 /**
  * close connection to db
  */
 function end() {
-    createTriggers();
+    
     db.close();
     //console.log("plex.end");
 }
@@ -245,7 +243,6 @@ function cleanLoneTTPTags() {
      WHERE tag_type = 0 
      AND extra_data = 'TTP' 
      AND id NOT IN (select tag_id from taggings WHERE "index" = 0)`;
-    console.log(sql);
 
     let stmt = db.prepare(sql);
     stmt.run();
@@ -507,6 +504,7 @@ module.exports = {
 
     deleteTriggers: deleteTriggers,
     createTriggers: createTriggers,
+    storeTriggers: storeTriggers,
 
     addColumnTTPUpdate: addColumnTTPUpdate,
     cleanLoneTTPTags: cleanLoneTTPTags,

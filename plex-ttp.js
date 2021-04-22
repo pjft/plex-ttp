@@ -9,16 +9,17 @@ const usage = `
     usage node plex-ttp.js [-h] [-c] [-l tag] [-d tag] [-s]
     -h : show this help
     -s : scan images and put face tags into Plex
+    -f : force scan ALL images and put face tags into Plex
     -c : clean Lone Tags
     -l [tag] : list matching tags 
     -d tag: delete the tag
-    -t : create triggers
-    -r : remove triggers
     `;
 
 let exifProcessing = 0, // processing EXIF ongoing
     statProcessing = 0, // stat file ongoing
     nbUpdate = 0; // number of updates
+
+let fullScan = false;
 
 
 // Need to track when to end EXIF process and close DB connection
@@ -30,6 +31,7 @@ const evHandler = function () {
     if (exifProcessing <= 0 && statProcessing <= 0) {
         plex.cleanLoneTTPTags();
         exif.end();
+        plex.createTriggers();
         plex.end();
         console.log(`Done : ${nbUpdate} update(s)`); // eslint-disable-line no-console
 
@@ -39,7 +41,9 @@ const evHandler = function () {
 
 function DoMainScan() {
     plex.init();
-
+    // backup and clean triggers
+    plex.storeTriggers()
+    plex.deleteTriggers();
     
     // add a column to bear datetime of TTP tag update and place update
     plex.addColumnTTPUpdate();
@@ -84,7 +88,8 @@ function DoMainScan() {
         statProcessing++;
         fs.stat(rec.file, (err, stat) => {
             statProcessing--;
-            if (stat && stat.mtimeMs > dateTTPUpdate)
+            // here we avoid updating older pictures, unless full scan
+            if (fullScan || (stat && stat.mtimeMs > dateTTPUpdate))
                 doTheUpdate(rec);
             ev.emit("stat");
 
@@ -114,25 +119,13 @@ if (argv.h)
 
 if (argv.c) {
     plex.init();
+    // backup and clean triggers
+    plex.storeTriggers()
+    plex.deleteTriggers();
     // eslint-disable-next-line no-console
     console.log("cleaning Lone tags");
     plex.cleanLoneTTPTags();
-    plex.end();
-}
-
-if (argv.t) {
-    plex.init();
-    // eslint-disable-next-line no-console
-    //console.log("Creating Triggers");
-    //plex.createTriggers();
-    plex.end();
-}
-
-if (argv.r) {
-    plex.init();
-    // eslint-disable-next-line no-console
-    //console.log("Removing Triggers");
-    //plex.deleteTriggers();
+    plex.createTriggers();
     plex.end();
 }
 
@@ -156,6 +149,9 @@ if (argv.l) {
 // delete all matching tags 
 if (argv.d) {
     plex.init();
+    // backup and clean triggers
+    plex.storeTriggers()
+    plex.deleteTriggers();
     const res = plex.listTag(argv.d);
     // eslint-disable-next-line no-console
     console.log("deleting", res);
@@ -164,8 +160,15 @@ if (argv.d) {
     ids.forEach(id => plex.deleteTTPTags(id));
 
     plex.cleanLoneTTPTags();
+    plex.createTriggers();
     plex.end();
 }
+
+if (argv.f) {
+    fullScan = true;
+    DoMainScan();
+}
+
 
 if (argv.s)
     DoMainScan();
