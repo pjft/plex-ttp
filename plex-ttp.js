@@ -65,11 +65,17 @@ function DoMainScan() {
         exif.getFromImage(rec.file)
             .then(data => {
                 nbUpdate++;
-                plex.deleteTTPTags(rec.mid); // delete any existing tags of the photo
-                plex.addTTPTags(rec.mid, data.faces); // add new tags
-                // eslint-disable-next-line no-console
-                console.log(`Adding ${rec.file}:`, data.faces);
-                // console.log("full ", data.tags);
+                if (data.faces.length == 0) {
+                    console.log(`Skipping. No tags in ${rec.file}: `, data.faces);
+                }
+                else
+                {
+                    plex.deleteTTPTags(rec.mid); // delete any existing tags of the photo
+                    plex.addTTPTags(rec.mid, data.faces); // add new tags
+                    // eslint-disable-next-line no-console
+                    console.log(`Adding ${rec.file}:`, data.faces);
+                    // console.log("full ", data.tags);
+                }
                 exifProcessing--;
                 ev.emit("exif");
             })
