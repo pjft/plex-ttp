@@ -6,9 +6,10 @@ const plex = require("./plex.js");
 const exif = require("./exif.js");
 
 const usage = `
-    usage node plex-ttp.js [-h] [-c] [-l tag] [-d tag] [-s]
+    usage node plex-ttp.js [-h] [-c] [-l tag] [-d tag] [-s [-t date-YYYY-MM-DD]]
     -h : show this help
     -s : scan images and put face tags into Plex
+        -t : start date to update pictures from
     -f : force scan ALL images and put face tags into Plex
     -c : clean Lone Tags
     -l [tag] : list matching tags 
@@ -20,6 +21,7 @@ let exifProcessing = 0, // processing EXIF ongoing
     nbUpdate = 0; // number of updates
 
 let fullScan = false;
+let updateDate = "";
 
 
 // Need to track when to end EXIF process and close DB connection
@@ -67,6 +69,7 @@ function DoMainScan() {
                 nbUpdate++;
                 if (data.faces.length == 0) {
                     console.log(`Skipping. No tags in ${rec.file}: `, data.faces);
+                    plex.addTTPTags(rec.mid, data.faces); // update UpdatedAt
                 }
                 else
                 {
@@ -90,11 +93,13 @@ function DoMainScan() {
         //console.log(rec.file);
         if (!rec.FaceUpdateTime) rec.FaceUpdateTime = 0;
         let dateTTPUpdate = Date.parse(rec.FaceUpdateTime);
-
         statProcessing++;
         fs.stat(rec.file, (err, stat) => {
             statProcessing--;
             // here we avoid updating older pictures, unless full scan
+            if (updateDate != "") {
+                dateTTPUpdate = updateDate;
+            }
             if (fullScan || (stat && stat.mtimeMs > dateTTPUpdate))
                 doTheUpdate(rec);
             ev.emit("stat");
@@ -118,7 +123,7 @@ if (username != "yes") {
     return;
 }
 
-if (argv.h)
+if (argv.h || process.argv.length == 2)
     console.log(usage); // eslint-disable-line no-console
 
 
@@ -176,5 +181,11 @@ if (argv.f) {
 }
 
 
-if (argv.s)
+if (argv.s) {
+    if (argv.t) {
+        console.log("Updating photos added after: ", argv.t);
+        updateDate = Date.parse(argv.t);
+    }
     DoMainScan();
+}
+
