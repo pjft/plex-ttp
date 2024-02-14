@@ -142,10 +142,10 @@ function getPhotoLibraryId() {
 function getTTPTags(mid) {
 
     let sql = `SELECT A.id as tid,B.tag as tag   FROM taggings as A, tags as B 
-            WHERE A.metadata_item_id = ?
+            WHERE A.tag_id = ?
             AND A.tag_id = B.id
             AND B.tag_type = 0
-            AND B.extra_data='TTP'`;
+            AND json_extract(B.extra_data, '$.ttp') = 'TTP'`;
 
     let stmt = db.prepare(sql);
     let recs = stmt.all(mid);
@@ -241,7 +241,7 @@ function cleanLoneTTPTags() {
     // search tags not referenced
     let sql = `DELETE FROM tags 
      WHERE tag_type = 0 
-     AND extra_data = 'TTP' 
+     AND json_extract(extra_data, '$.ttp') = 'TTP' 
      AND id NOT IN (select tag_id from taggings WHERE "index" = 0)`;
 
     let stmt = db.prepare(sql);
@@ -276,7 +276,7 @@ function scanTTPTags() {
     // search if tag exists in tags table
     let sql = `SELECT id,tag FROM tags 
      WHERE tag_type = 0 
-     AND extra_data = 'TTP'`;
+     AND json_extract(extra_data, '$.ttp') = 'TTP'`;
     let stmt = db.prepare(sql);
     TheTTPTags = stmt.all();
 }
@@ -323,7 +323,7 @@ function addTTPTags(mid, tags) {
         } else {
             console.log (`Not exists`);
             // if not exists
-            const sql = "INSERT INTO tags (tag, tag_type,extra_data) VALUES (?, 0,'TTP')";
+            const sql = "INSERT INTO tags (tag, tag_type,extra_data) VALUES (?, 0,'{\"ttp\":\"TTP\",\"url\":\"\"}')";
             console.log (`Preparing`);
             const stmt = db.prepare(sql);
             console.log (`Running`);
@@ -418,7 +418,7 @@ let places = { ...addr };
             // eslint-disable-next-line no-console
             console.log("====> Adding new place ", name, field.tags);
 
-            const sql = "INSERT INTO tags (tag, tag_type,tag_value, extra_data) VALUES (?, 400,?,'PLACE')";
+            const sql = "INSERT INTO tags (tag, tag_type,tag_value, extra_data) VALUES (?, 400,?,'{\"ttp\":\"PLACE\"}')";
             const stmt = db.prepare(sql);
             const info = stmt.run(name, field.tags);
             tid = info.lastInsertRowid;
