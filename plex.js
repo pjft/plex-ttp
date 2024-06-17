@@ -182,17 +182,14 @@ function getPlaceTags(mid) {
  * @param {*} mid 
  */
 function deleteTTPTags(mid) {
-
-    let tags = getTTPTags(mid);
-    if (tags.length == 0) // no tags
-        return;
-
-    let ids = tags.map(tag => tag.tid).join(",");
-    //console.log("ids ", ids);
-
-    let sql = `DELETE FROM taggings WHERE id IN (${ids})`;
+    console.log("id: ", mid);
+    let sql = `DELETE FROM taggings WHERE tag_id = ? `;
     let stmt = db.prepare(sql);
-    stmt.run();
+    stmt.run(mid);
+
+    sql = "DELETE FROM tags WHERE id = ? ";
+    stmt = db.prepare(sql);
+    stmt.run(mid);
 }
 
 
